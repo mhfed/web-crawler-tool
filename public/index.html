@@ -250,6 +250,10 @@
         <div class="header">
             <h1>🕷️ Web Crawler Tool</h1>
             <p>Công cụ crawl dữ liệu website miễn phí và mạnh mẽ</p>
+            <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 14px;">
+                ✅ <strong>Đã sửa lỗi CORS!</strong> Sử dụng backend API để crawl ổn định hơn.<br>
+                🔄 Fallback tự động sang CORS proxy nếu backend gặp sự cố.
+            </div>
         </div>
         
         <div class="main-content">
@@ -276,6 +280,13 @@ https://byd.1826.sg/about</textarea>
                 </div>
                 
                 <button id="crawlBtn" class="crawl-btn">🚀 Bắt đầu Crawl</button>
+                
+                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; font-size: 13px;">
+                    <strong>💡 Mẹo:</strong> Muốn crawl không bị giới hạn CORS? 
+                    <a href="#" onclick="alert('Sử dụng Chrome Extension trong thư mục /extension hoặc dùng script command line: npm run crawl-file')" style="color: #1976d2;">
+                        Dùng Extension hoặc Command Line
+                    </a>
+                </div>
             </div>
             
             <div id="status" class="status" style="display: none;"></div>
@@ -364,58 +375,123 @@ https://byd.1826.sg/about</textarea>
         }
         
         async function crawlPage(url, maxText, maxLinks) {
-            // Sử dụng CORS proxy để bypass CORS restriction
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            
-            const response = await fetch(proxyUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+            try {
+                // Try backend API first (more reliable)
+                const response = await fetch('/api/crawl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url,
+                        maxText,
+                        maxLinks,
+                        maxImages: 10
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result;
+                } else {
+                    throw new Error(`Backend API failed: ${response.status}`);
+                }
+            } catch (backendError) {
+                console.warn('Backend crawl failed, trying CORS proxies...', backendError);
+                
+                // Fallback to CORS proxies
+                const proxies = [
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                    `https://cors-anywhere.herokuapp.com/${url}`,
+                    `https://thingproxy.freeboard.io/fetch/${url}`
+                ];
+                
+                let htmlContent = null;
+                let lastError = backendError;
+                
+                for (const proxyUrl of proxies) {
+                    try {
+                        const response = await fetch(proxyUrl, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        const contentType = response.headers.get('content-type') || '';
+                        if (contentType.includes('application/json')) {
+                            const data = await response.json();
+                            htmlContent = data.contents || data.data || data;
+                        } else {
+                            htmlContent = await response.text();
+                        }
+                        
+                        // Validate that we got HTML content
+                        if (htmlContent && (htmlContent.includes('<html') || htmlContent.includes('<!DOCTYPE'))) {
+                            break; // Success, exit loop
+                        } else {
+                            throw new Error('Response không phải HTML hợp lệ');
+                        }
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Proxy failed: ${proxyUrl}`, error);
+                        continue; // Try next proxy
+                    }
+                }
+                
+                if (!htmlContent) {
+                    throw new Error(`Tất cả phương pháp đều thất bại. Lỗi cuối: ${lastError?.message}`);
+                }
+                
+                // Parse HTML using DOMParser for proxy fallback
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+                
+                // Extract data
+                const title = doc.querySelector('title')?.textContent?.trim() || '';
+                const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+                const keywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
+                
+                // Remove script and style tags
+                doc.querySelectorAll('script, style, nav, footer, header').forEach(el => el.remove());
+                const text = doc.body?.textContent?.replace(/\s+/g, ' ')?.trim()?.substring(0, maxText) || '';
+                
+                // Extract links
+                const links = Array.from(doc.querySelectorAll('a[href]'))
+                    .slice(0, maxLinks)
+                    .map(a => ({
+                        href: a.getAttribute('href'),
+                        text: a.textContent?.trim() || ''
+                    }))
+                    .filter(link => link.href && link.text);
+                
+                // Extract images
+                const images = Array.from(doc.querySelectorAll('img[src]'))
+                    .slice(0, 10)
+                    .map(img => ({
+                        src: img.getAttribute('src'),
+                        alt: img.getAttribute('alt') || ''
+                    }))
+                    .filter(img => img.src);
+                
+                return {
+                    url,
+                    title,
+                    description,
+                    keywords,
+                    text,
+                    links,
+                    images,
+                    crawledAt: new Date().toISOString()
+                };
             }
-            
-            const data = await response.json();
-            const htmlContent = data.contents;
-            
-            // Parse HTML using DOMParser
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlContent, 'text/html');
-            
-            // Extract data
-            const title = doc.querySelector('title')?.textContent?.trim() || '';
-            const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-            const keywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
-            
-            // Remove script and style tags
-            doc.querySelectorAll('script, style, nav, footer, header').forEach(el => el.remove());
-            const text = doc.body?.textContent?.replace(/\s+/g, ' ')?.trim()?.substring(0, maxText) || '';
-            
-            // Extract links
-            const links = Array.from(doc.querySelectorAll('a[href]'))
-                .slice(0, maxLinks)
-                .map(a => ({
-                    href: a.getAttribute('href'),
-                    text: a.textContent?.trim() || ''
-                }))
-                .filter(link => link.href && link.text);
-            
-            // Extract images
-            const images = Array.from(doc.querySelectorAll('img[src]'))
-                .slice(0, 10)
-                .map(img => ({
-                    src: img.getAttribute('src'),
-                    alt: img.getAttribute('alt') || ''
-                }))
-                .filter(img => img.src);
-            
-            return {
-                url,
-                title,
-                description,
-                keywords,
-                text,
-                links,
-                images,
-                crawledAt: new Date().toISOString()
-            };
         }
         
         function displayResult(result) {
