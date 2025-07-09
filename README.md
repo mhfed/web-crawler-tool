@@ -205,6 +205,147 @@ npm run web
 - 💡 **Feature requests:** [GitHub Discussions](https://github.com/user/repo/discussions)
 - 📖 **Documentation:** [Wiki](https://github.com/user/repo/wiki)
 
+## 🌐 **Deploy lên Vercel**
+
+### **Bước 1: Chuẩn bị Deploy**
+
+```bash
+# Đảm bảo tất cả dependencies đã cài
+npm install
+
+# Test local trước khi deploy  
+npm run dev
+# ✅ Mở http://localhost:2000 để test
+```
+
+### **Bước 2: Tạo tài khoản Vercel**
+
+1. 🌐 Truy cập [vercel.com](https://vercel.com)
+2. 📝 **Sign up** với GitHub account
+3. ✅ **Connect GitHub** để import projects
+
+### **Bước 3: Deploy từ GitHub**
+
+```bash
+# Push code lên GitHub
+git add .
+git commit -m "✨ Add Vercel deployment config"
+git push origin main
+```
+
+### **Bước 4: Import Project trên Vercel**
+
+1. 🌐 Vào [vercel.com/dashboard](https://vercel.com/dashboard)
+2. 🔗 Click **"New Project"**
+3. 📂 **Import** your GitHub repository
+4. ⚙️ **Configure** project:
+   - **Framework Preset**: `Other`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: Leave empty
+   - **Install Command**: `npm install`
+5. 🚀 Click **"Deploy"**
+
+### **Bước 5: Deploy từ CLI (Nhanh hơn)**
+
+```bash
+# Cài Vercel CLI
+npm i -g vercel
+
+# Login Vercel
+vercel login
+
+# Deploy project
+vercel
+
+# Follow prompts:
+# ? Set up and deploy "~/Documents/craw"? [Y/n] y
+# ? Which scope? [Your username]
+# ? Link to existing project? [y/N] n  
+# ? What's your project's name? web-crawler-tool
+# ? In which directory is your code located? ./
+
+# Production deploy
+vercel --prod
+```
+
+### **Bước 6: Cấu hình Domain (Optional)**
+
+```bash
+# Add custom domain
+vercel domains add yourdomain.com
+
+# Link domain to project  
+vercel alias your-vercel-url.vercel.app yourdomain.com
+```
+
+### **🎯 Kết quả Deploy**
+
+Sau khi deploy thành công:
+
+- **✅ Live URL**: `https://your-project.vercel.app`
+- **✅ API Endpoint**: `https://your-project.vercel.app/api/crawl`
+- **✅ Auto-deploy**: Mỗi lần push code mới
+- **✅ HTTPS**: Free SSL certificate
+- **✅ Global CDN**: Deploy toàn cầu
+
+### **🔧 Environment Variables (Nếu cần)**
+
+Trong Vercel Dashboard > Settings > Environment Variables:
+
+```bash
+NODE_ENV=production
+```
+
+### **🐛 Troubleshooting Deploy**
+
+#### Lỗi "Function timeout"?
+```json
+// vercel.json
+{
+  "functions": {
+    "server.js": {
+      "maxDuration": 60
+    }
+  }
+}
+```
+
+#### Lỗi "Module not found"?
+```bash
+# Xóa node_modules và reinstall
+rm -rf node_modules package-lock.json
+npm install
+vercel --prod
+```
+
+#### Build thất bại?
+```bash
+# Check engines trong package.json
+"engines": {
+  "node": ">=18.0.0"
+}
+```
+
+### **📊 Monitor Performance**
+
+- **🔍 Analytics**: Vercel Dashboard > Analytics
+- **⚡ Speed Insights**: Automatic performance monitoring  
+- **🚨 Error Tracking**: Real-time error logs
+- **📈 Usage**: Function invocations, bandwidth
+
+### **🔄 Update App**
+
+```bash
+# Local changes
+git add .
+git commit -m "🚀 Update crawler features"
+git push origin main
+
+# ✅ Vercel auto-deploys in ~30 seconds!
+```
+
 ---
 
-**🎉 Unlimited Mode giúp bạn crawl TOÀN BỘ dữ liệu mà không bỏ sót gì!** 
+**🎉 Unlimited Mode giúp bạn crawl TOÀN BỘ dữ liệu mà không bỏ sót gì!**
+
+**🌐 Deploy lên Vercel để sử dụng từ bất kỳ đâu với URL công khai!** 

@@ -1,8 +1,59 @@
+# Dependencies
 node_modules/
-output/
-*.log
-.DS_Store
-.env
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log* 
+yarn-error.log*
+
+# Production builds
+dist/
+build/
+
+# Output files
+output/
+*.json
+!package.json
+!package-lock.json
+!vercel.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Vercel
+.vercel
+
+# Test files
+test-*.js
+*-test-*.json
+*-test-*.log 

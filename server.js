@@ -177,9 +177,16 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Web Crawler Server đang chạy tại:`);
-    console.log(`   Local: http://localhost:${PORT}`);
-    console.log(`   Network: http://0.0.0.0:${PORT}`);
-    console.log(`\n📱 Mở trình duyệt và truy cập địa chỉ trên để sử dụng!`);
-}); 
+// For Vercel serverless functions
+export default app;
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Web Crawler Server đang chạy tại:`);
+        console.log(`   Local: http://localhost:${PORT}`);
+        console.log(`   Network: http://0.0.0.0:${PORT}`);
+        console.log(`\n📱 Mở trình duyệt và truy cập địa chỉ trên để sử dụng!`);
+        console.log(`\n🌐 Ready for Vercel deployment!`);
+    });
+} 
