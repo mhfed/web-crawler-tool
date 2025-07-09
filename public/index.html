@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Crawler Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .crawl-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .crawl-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .crawl-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .result-header {
+            background: #e9ecef;
+            padding: 15px;
+            font-weight: 600;
+        }
+        
+        .result-content {
+            padding: 20px;
+        }
+        
+        .result-field {
+            margin-bottom: 15px;
+        }
+        
+        .result-field strong {
+            color: #495057;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        .text-content {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .links-list, .images-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .links-list a {
+            color: #667eea;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+        }
+        
+        .links-list a:hover {
+            text-decoration: underline;
+        }
+        
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕷️ Web Crawler Tool</h1>
+            <p>Công cụ crawl dữ liệu website miễn phí và mạnh mẽ</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="urls">📝 Danh sách URLs (mỗi URL một dòng):</label>
+                    <textarea id="urls" placeholder="https://example.com&#10;https://another-site.com/about&#10;https://third-site.com/contact">https://byd.1826.sg/
+https://byd.1826.sg/about</textarea>
+                </div>
+                
+                <div class="settings">
+                    <div class="form-group">
+                        <label for="delay">⏱️ Delay giữa requests (ms):</label>
+                        <input type="number" id="delay" value="1000" min="100" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxText">📄 Độ dài text tối đa:</label>
+                        <input type="number" id="maxText" value="5000" min="100" max="50000">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxLinks">🔗 Số links tối đa:</label>
+                        <input type="number" id="maxLinks" value="20" min="1" max="100">
+                    </div>
+                </div>
+                
+                <button id="crawlBtn" class="crawl-btn">🚀 Bắt đầu Crawl</button>
+            </div>
+            
+            <div id="status" class="status" style="display: none;"></div>
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div id="results" class="results"></div>
+            
+            <div id="downloadSection" class="download-section" style="display: none;">
+                <h3>📥 Tải xuống kết quả</h3>
+                <button id="downloadJson" class="download-btn">JSON</button>
+                <button id="downloadCsv" class="download-btn">CSV</button>
+                <button id="downloadHtml" class="download-btn">HTML Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let crawlResults = [];
+        
+        document.getElementById('crawlBtn').addEventListener('click', startCrawl);
+        document.getElementById('downloadJson').addEventListener('click', () => downloadFile('json'));
+        document.getElementById('downloadCsv').addEventListener('click', () => downloadFile('csv'));
+        document.getElementById('downloadHtml').addEventListener('click', () => downloadFile('html'));
+        
+        async function startCrawl() {
+            const urlsText = document.getElementById('urls').value.trim();
+            const delay = parseInt(document.getElementById('delay').value);
+            const maxText = parseInt(document.getElementById('maxText').value);
+            const maxLinks = parseInt(document.getElementById('maxLinks').value);
+            
+            if (!urlsText) {
+                showStatus('❌ Vui lòng nhập ít nhất một URL!', 'error');
+                return;
+            }
+            
+            const urls = urlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url && isValidUrl(url));
+                
+            if (urls.length === 0) {
+                showStatus('❌ Không tìm thấy URLs hợp lệ!', 'error');
+                return;
+            }
+            
+            document.getElementById('crawlBtn').disabled = true;
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('downloadSection').style.display = 'none';
+            
+            showStatus(`🚀 Bắt đầu crawl ${urls.length} trang...`, 'loading');
+            showProgress(0);
+            
+            crawlResults = [];
+            
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                showStatus(`📡 Đang crawl: ${url} (${i + 1}/${urls.length})`, 'loading');
+                
+                try {
+                    const result = await crawlPage(url, maxText, maxLinks);
+                    crawlResults.push(result);
+                    displayResult(result);
+                    
+                    const progress = ((i + 1) / urls.length) * 100;
+                    showProgress(progress);
+                    
+                    if (i < urls.length - 1) {
+                        await sleep(delay);
+                    }
+                } catch (error) {
+                    const errorResult = {
+                        url,
+                        error: error.message,
+                        crawledAt: new Date().toISOString()
+                    };
+                    crawlResults.push(errorResult);
+                    displayResult(errorResult);
+                }
+            }
+            
+            showStatus(`✅ Hoàn thành! Đã crawl ${crawlResults.length} trang.`, 'success');
+            document.getElementById('crawlBtn').disabled = false;
+            document.getElementById('downloadSection').style.display = 'block';
+            hideProgress();
+        }
+        
+        async function crawlPage(url, maxText, maxLinks) {
+            // Sử dụng CORS proxy để bypass CORS restriction
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            
+            const response = await fetch(proxyUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const htmlContent = data.contents;
+            
+            // Parse HTML using DOMParser
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            
+            // Extract data
+            const title = doc.querySelector('title')?.textContent?.trim() || '';
+            const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+            const keywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
+            
+            // Remove script and style tags
+            doc.querySelectorAll('script, style, nav, footer, header').forEach(el => el.remove());
+            const text = doc.body?.textContent?.replace(/\s+/g, ' ')?.trim()?.substring(0, maxText) || '';
+            
+            // Extract links
+            const links = Array.from(doc.querySelectorAll('a[href]'))
+                .slice(0, maxLinks)
+                .map(a => ({
+                    href: a.getAttribute('href'),
+                    text: a.textContent?.trim() || ''
+                }))
+                .filter(link => link.href && link.text);
+            
+            // Extract images
+            const images = Array.from(doc.querySelectorAll('img[src]'))
+                .slice(0, 10)
+                .map(img => ({
+                    src: img.getAttribute('src'),
+                    alt: img.getAttribute('alt') || ''
+                }))
+                .filter(img => img.src);
+            
+            return {
+                url,
+                title,
+                description,
+                keywords,
+                text,
+                links,
+                images,
+                crawledAt: new Date().toISOString()
+            };
+        }
+        
+        function displayResult(result) {
+            const resultsDiv = document.getElementById('results');
+            const resultCard = document.createElement('div');
+            resultCard.className = 'result-card';
+            
+            if (result.error) {
+                resultCard.innerHTML = `
+                    <div class="result-header">❌ ${result.url}</div>
+                    <div class="result-content">
+                        <div class="result-field">
+                            <strong>Lỗi:</strong> ${result.error}
+                        </div>
+                        <div class="result-field">
+                            <strong>Thời gian:</strong> ${new Date(result.crawledAt).toLocaleString('vi-VN')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultCard.innerHTML = `
+                    <div class="result-header">✅ ${result.url}</div>
+                    <div class="result-content">
+                        <div class="result-field">
+                            <strong>Tiêu đề:</strong> ${result.title || 'Không có'}
+                        </div>
+                        <div class="result-field">
+                            <strong>Mô tả:</strong> ${result.description || 'Không có'}
+                        </div>
+                        <div class="result-field">
+                            <strong>Keywords:</strong> ${result.keywords || 'Không có'}
+                        </div>
+                        <div class="result-field">
+                            <strong>Nội dung:</strong>
+                            <div class="text-content">${result.text?.substring(0, 500) || 'Không có'}${result.text?.length > 500 ? '...' : ''}</div>
+                        </div>
+                        <div class="result-field">
+                            <strong>Links (${result.links?.length || 0}):</strong>
+                            <div class="links-list">
+                                ${result.links?.slice(0, 5).map(link => `<a href="${link.href}" target="_blank">${link.text}</a>`).join('') || 'Không có'}
+                                ${result.links?.length > 5 ? '<div>...</div>' : ''}
+                            </div>
+                        </div>
+                        <div class="result-field">
+                            <strong>Hình ảnh:</strong> ${result.images?.length || 0} hình
+                        </div>
+                        <div class="result-field">
+                            <strong>Thời gian:</strong> ${new Date(result.crawledAt).toLocaleString('vi-VN')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsDiv.appendChild(resultCard);
+        }
+        
+        function downloadFile(format) {
+            let content, filename, mimeType;
+            
+            switch (format) {
+                case 'json':
+                    content = JSON.stringify(crawlResults, null, 2);
+                    filename = 'crawl_results.json';
+                    mimeType = 'application/json';
+                    break;
+                case 'csv':
+                    content = convertToCSV(crawlResults);
+                    filename = 'crawl_results.csv';
+                    mimeType = 'text/csv';
+                    break;
+                case 'html':
+                    content = generateHtmlReport(crawlResults);
+                    filename = 'crawl_report.html';
+                    mimeType = 'text/html';
+                    break;
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function convertToCSV(data) {
+            if (!data.length) return '';
+            
+            const headers = ['url', 'title', 'description', 'keywords', 'text', 'links_count', 'images_count', 'error', 'crawledAt'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    `"${row.url || ''}"`,
+                    `"${(row.title || '').replace(/"/g, '""')}"`,
+                    `"${(row.description || '').replace(/"/g, '""')}"`,
+                    `"${(row.keywords || '').replace(/"/g, '""')}"`,
+                    `"${(row.text || '').replace(/"/g, '""').substring(0, 1000)}"`,
+                    row.links?.length || 0,
+                    row.images?.length || 0,
+                    `"${row.error || ''}"`,
+                    `"${row.crawledAt || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            return csvContent;
+        }
+        
+        function generateHtmlReport(data) {
+            return `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo Crawler</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .summary { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .page { border: 1px solid #ccc; margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .error { background-color: #ffe6e6; }
+        .success { background-color: #e6ffe6; }
+        .url { font-weight: bold; color: #0066cc; }
+        .title { font-size: 18px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Báo cáo Web Crawler</h1>
+    <div class="summary">
+        <h2>Tóm tắt</h2>
+        <p><strong>Tổng số trang:</strong> ${data.length}</p>
+        <p><strong>Thành công:</strong> ${data.filter(p => !p.error).length}</p>
+        <p><strong>Lỗi:</strong> ${data.filter(p => p.error).length}</p>
+        <p><strong>Thời gian tạo:</strong> ${new Date().toLocaleString('vi-VN')}</p>
+    </div>
+    ${data.map(page => `
+        <div class="page ${page.error ? 'error' : 'success'}">
+            <div class="url">${page.url}</div>
+            ${page.error ? `
+                <div style="color: red;"><strong>Lỗi:</strong> ${page.error}</div>
+            ` : `
+                <div class="title">${page.title || 'Không có tiêu đề'}</div>
+                <p><strong>Mô tả:</strong> ${page.description || 'Không có'}</p>
+                <p><strong>Keywords:</strong> ${page.keywords || 'Không có'}</p>
+                <p><strong>Nội dung:</strong> ${(page.text || 'Không có').substring(0, 500)}...</p>
+                <p><strong>Links:</strong> ${page.links?.length || 0}</p>
+                <p><strong>Hình ảnh:</strong> ${page.images?.length || 0}</p>
+            `}
+            <p><small>Crawled: ${new Date(page.crawledAt).toLocaleString('vi-VN')}</small></p>
+        </div>
+    `).join('')}
+</body>
+</html>`;
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+        
+        function showProgress(percentage) {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            progressBar.style.display = 'block';
+            progressFill.style.width = percentage + '%';
+        }
+        
+        function hideProgress() {
+            document.getElementById('progressBar').style.display = 'none';
+        }
+        
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html> 

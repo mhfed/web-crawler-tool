@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            width: 350px;
+            min-height: 400px;
+            padding: 20px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        .current-page {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .url-display {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+        
+        .crawl-current {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        
+        .crawl-current:hover {
+            background: #5a6fd8;
+        }
+        
+        .bulk-section {
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        
+        .crawl-bulk {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .crawl-bulk:hover {
+            background: #218838;
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .result-url {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .result-title {
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .result-meta {
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .download-section {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .download-btn {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .download-btn:hover {
+            background: #e0a800;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🕷️ Web Crawler</h1>
+    </div>
+    
+    <div class="current-page">
+        <div class="section-title">Trang hiện tại:</div>
+        <div class="url-display" id="currentUrl">Đang tải...</div>
+        <button class="crawl-current" id="crawlCurrent">📄 Crawl trang này</button>
+    </div>
+    
+    <div class="bulk-section">
+        <div class="section-title">Crawl nhiều URLs:</div>
+        <textarea id="bulkUrls" placeholder="Nhập URLs, mỗi URL một dòng..."></textarea>
+        <button class="crawl-bulk" id="crawlBulk">🚀 Crawl tất cả</button>
+    </div>
+    
+    <div id="status" class="status hidden"></div>
+    
+    <div id="results" class="results"></div>
+    
+    <div id="downloadSection" class="download-section hidden">
+        <button class="download-btn" id="downloadJson">JSON</button>
+        <button class="download-btn" id="downloadCsv">CSV</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html> 

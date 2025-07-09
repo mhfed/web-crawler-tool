@@ -1,0 +1,10 @@
+# Danh sách URLs để crawl
+# Bỏ ghi chú bằng cách xóa dấu #
+# Thêm URLs mới ở dưới
+
+https://byd.1826.sg/
+https://byd.1826.sg/about
+
+# Thêm URLs khác ở đây:
+# https://example.com
+# https://other-site.com 
