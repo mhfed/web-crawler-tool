@@ -264,19 +264,40 @@
 https://byd.1826.sg/about</textarea>
                 </div>
                 
-                <div class="settings">
+                <div class="form-group">
+                    <div style="display: flex; align-items: center; margin-bottom: 15px; padding: 12px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px;">
+                        <input type="checkbox" id="unlimitedMode" style="margin-right: 10px; transform: scale(1.2);">
+                        <label for="unlimitedMode" style="margin: 0; font-weight: 600; color: #856404;">
+                            🚀 <strong>Unlimited Mode</strong> - Crawl toàn bộ trang (chậm hơn nhưng đầy đủ)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings" id="normalSettings">
                     <div class="form-group">
                         <label for="delay">⏱️ Delay giữa requests (ms):</label>
                         <input type="number" id="delay" value="1000" min="100" max="10000">
                     </div>
                     <div class="form-group">
                         <label for="maxText">📄 Độ dài text tối đa:</label>
-                        <input type="number" id="maxText" value="5000" min="100" max="50000">
+                        <input type="number" id="maxText" value="5000" min="100" max="100000">
                     </div>
                     <div class="form-group">
                         <label for="maxLinks">🔗 Số links tối đa:</label>
-                        <input type="number" id="maxLinks" value="20" min="1" max="100">
+                        <input type="number" id="maxLinks" value="20" min="1" max="500">
                     </div>
+                    <div class="form-group">
+                        <label for="maxImages">🖼️ Số images tối đa:</label>
+                        <input type="number" id="maxImages" value="10" min="1" max="100">
+                    </div>
+                </div>
+
+                <div class="unlimited-info" id="unlimitedInfo" style="display: none; padding: 12px; background: #e8f4fd; border: 1px solid #bee5eb; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>🔥 Unlimited Mode được bật:</strong><br>
+                    • Crawl <strong>toàn bộ text</strong> không giới hạn<br>
+                    • Lấy <strong>tất cả links và images</strong><br>
+                    • Thêm <strong>headings, meta tags, cấu trúc</strong><br>
+                    • ⚠️ <em>Có thể mất nhiều thời gian hơn</em>
                 </div>
                 
                 <button id="crawlBtn" class="crawl-btn">🚀 Bắt đầu Crawl</button>
@@ -313,11 +334,47 @@ https://byd.1826.sg/about</textarea>
         document.getElementById('downloadCsv').addEventListener('click', () => downloadFile('csv'));
         document.getElementById('downloadHtml').addEventListener('click', () => downloadFile('html'));
         
+        // Handle unlimited mode toggle
+        document.getElementById('unlimitedMode').addEventListener('change', function() {
+            const isUnlimited = this.checked;
+            const normalSettings = document.getElementById('normalSettings');
+            const unlimitedInfo = document.getElementById('unlimitedInfo');
+            
+            if (isUnlimited) {
+                normalSettings.style.display = 'none';
+                unlimitedInfo.style.display = 'block';
+            } else {
+                normalSettings.style.display = 'grid';
+                unlimitedInfo.style.display = 'none';
+            }
+        });
+        
         async function startCrawl() {
             const urlsText = document.getElementById('urls').value.trim();
-            const delay = parseInt(document.getElementById('delay').value);
-            const maxText = parseInt(document.getElementById('maxText').value);
-            const maxLinks = parseInt(document.getElementById('maxLinks').value);
+            const isUnlimited = document.getElementById('unlimitedMode').checked;
+            
+            let crawlSettings;
+            if (isUnlimited) {
+                crawlSettings = {
+                    delay: 2000, // Slower for unlimited
+                    maxText: 0,  // Unlimited
+                    maxLinks: 0, // Unlimited
+                    maxImages: 0, // Unlimited
+                    includeHeadings: true,
+                    includeMetaTags: true,
+                    includeStructure: true
+                };
+            } else {
+                crawlSettings = {
+                    delay: parseInt(document.getElementById('delay').value),
+                    maxText: parseInt(document.getElementById('maxText').value),
+                    maxLinks: parseInt(document.getElementById('maxLinks').value),
+                    maxImages: parseInt(document.getElementById('maxImages').value),
+                    includeHeadings: false,
+                    includeMetaTags: false,
+                    includeStructure: false
+                };
+            }
             
             if (!urlsText) {
                 showStatus('❌ Vui lòng nhập ít nhất một URL!', 'error');
@@ -337,17 +394,18 @@ https://byd.1826.sg/about</textarea>
             document.getElementById('results').innerHTML = '';
             document.getElementById('downloadSection').style.display = 'none';
             
-            showStatus(`🚀 Bắt đầu crawl ${urls.length} trang...`, 'loading');
+            const modeText = isUnlimited ? 'Unlimited Mode' : 'Normal Mode';
+            showStatus(`🚀 Bắt đầu crawl ${urls.length} trang (${modeText})...`, 'loading');
             showProgress(0);
             
             crawlResults = [];
             
             for (let i = 0; i < urls.length; i++) {
                 const url = urls[i];
-                showStatus(`📡 Đang crawl: ${url} (${i + 1}/${urls.length})`, 'loading');
+                showStatus(`📡 Đang crawl: ${url} (${i + 1}/${urls.length}) - ${modeText}`, 'loading');
                 
                 try {
-                    const result = await crawlPage(url, maxText, maxLinks);
+                    const result = await crawlPage(url, crawlSettings);
                     crawlResults.push(result);
                     displayResult(result);
                     
@@ -355,7 +413,7 @@ https://byd.1826.sg/about</textarea>
                     showProgress(progress);
                     
                     if (i < urls.length - 1) {
-                        await sleep(delay);
+                        await sleep(crawlSettings.delay);
                     }
                 } catch (error) {
                     const errorResult = {
@@ -374,7 +432,7 @@ https://byd.1826.sg/about</textarea>
             hideProgress();
         }
         
-        async function crawlPage(url, maxText, maxLinks) {
+        async function crawlPage(url, settings) {
             try {
                 // Try backend API first (more reliable)
                 const response = await fetch('/api/crawl', {
@@ -384,9 +442,13 @@ https://byd.1826.sg/about</textarea>
                     },
                     body: JSON.stringify({
                         url,
-                        maxText,
-                        maxLinks,
-                        maxImages: 10
+                        maxText: settings.maxText,
+                        maxLinks: settings.maxLinks,
+                        maxImages: settings.maxImages,
+                        includeHeadings: settings.includeHeadings,
+                        includeMetaTags: settings.includeMetaTags,
+                        includeStructure: settings.includeStructure,
+                        unlimited: settings.maxText === 0
                     })
                 });
                 
@@ -461,25 +523,56 @@ https://byd.1826.sg/about</textarea>
                 
                 // Remove script and style tags
                 doc.querySelectorAll('script, style, nav, footer, header').forEach(el => el.remove());
-                const text = doc.body?.textContent?.replace(/\s+/g, ' ')?.trim()?.substring(0, maxText) || '';
+                const fullText = doc.body?.textContent?.replace(/\s+/g, ' ')?.trim() || '';
+                const text = settings.maxText === 0 ? fullText : fullText.substring(0, settings.maxText);
                 
                 // Extract links
-                const links = Array.from(doc.querySelectorAll('a[href]'))
-                    .slice(0, maxLinks)
+                const allLinks = Array.from(doc.querySelectorAll('a[href]'))
                     .map(a => ({
                         href: a.getAttribute('href'),
                         text: a.textContent?.trim() || ''
                     }))
                     .filter(link => link.href && link.text);
+                const links = settings.maxLinks === 0 ? allLinks : allLinks.slice(0, settings.maxLinks);
                 
                 // Extract images
-                const images = Array.from(doc.querySelectorAll('img[src]'))
-                    .slice(0, 10)
+                const allImages = Array.from(doc.querySelectorAll('img[src]'))
                     .map(img => ({
                         src: img.getAttribute('src'),
                         alt: img.getAttribute('alt') || ''
                     }))
                     .filter(img => img.src);
+                const images = settings.maxImages === 0 ? allImages : allImages.slice(0, settings.maxImages);
+                
+                // Extract additional data for unlimited mode
+                let extraData = {};
+                if (settings.includeHeadings) {
+                    extraData.headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+                        .map(h => ({
+                            level: h.tagName,
+                            text: h.textContent?.trim() || ''
+                        }))
+                        .filter(h => h.text);
+                }
+                
+                if (settings.includeMetaTags) {
+                    extraData.metaTags = Array.from(doc.querySelectorAll('meta'))
+                        .map(meta => ({
+                            name: meta.getAttribute('name') || meta.getAttribute('property') || '',
+                            content: meta.getAttribute('content') || ''
+                        }))
+                        .filter(meta => meta.name && meta.content);
+                }
+                
+                if (settings.includeStructure) {
+                    extraData.structure = {
+                        totalElements: doc.querySelectorAll('*').length,
+                        forms: doc.querySelectorAll('form').length,
+                        tables: doc.querySelectorAll('table').length,
+                        videos: doc.querySelectorAll('video').length,
+                        scripts: doc.querySelectorAll('script').length
+                    };
+                }
                 
                 return {
                     url,
@@ -487,9 +580,14 @@ https://byd.1826.sg/about</textarea>
                     description,
                     keywords,
                     text,
+                    textLength: text.length,
                     links,
+                    linksCount: links.length,
                     images,
-                    crawledAt: new Date().toISOString()
+                    imagesCount: images.length,
+                    ...extraData,
+                    crawledAt: new Date().toISOString(),
+                    crawlMode: settings.maxText === 0 ? 'unlimited' : 'limited'
                 };
             }
         }
@@ -524,23 +622,48 @@ https://byd.1826.sg/about</textarea>
                         <div class="result-field">
                             <strong>Keywords:</strong> ${result.keywords || 'Không có'}
                         </div>
-                        <div class="result-field">
-                            <strong>Nội dung:</strong>
-                            <div class="text-content">${result.text?.substring(0, 500) || 'Không có'}${result.text?.length > 500 ? '...' : ''}</div>
+                                        <div class="result-field">
+                    <strong>Nội dung:</strong>
+                    <div class="text-content">${result.text?.substring(0, 500) || 'Không có'}${result.text?.length > 500 ? '...' : ''}</div>
+                    ${result.textLength ? `<small style="color: #666;">Tổng: ${result.textLength.toLocaleString()} ký tự</small>` : ''}
+                </div>
+                <div class="result-field">
+                    <strong>Links (${result.linksCount || result.links?.length || 0}):</strong>
+                    <div class="links-list">
+                        ${result.links?.slice(0, 5).map(link => `<a href="${link.href}" target="_blank">${link.text}</a>`).join('') || 'Không có'}
+                        ${result.links?.length > 5 ? '<div>...</div>' : ''}
+                    </div>
+                </div>
+                <div class="result-field">
+                    <strong>Hình ảnh:</strong> ${result.imagesCount || result.images?.length || 0} hình
+                </div>
+                ${result.headings ? `
+                    <div class="result-field">
+                        <strong>Headings (${result.headings.length}):</strong>
+                        <div style="max-height: 100px; overflow-y: auto; font-size: 12px;">
+                            ${result.headings.slice(0, 5).map(h => `<div><strong>${h.level}:</strong> ${h.text}</div>`).join('')}
+                            ${result.headings.length > 5 ? '<div>...</div>' : ''}
                         </div>
-                        <div class="result-field">
-                            <strong>Links (${result.links?.length || 0}):</strong>
-                            <div class="links-list">
-                                ${result.links?.slice(0, 5).map(link => `<a href="${link.href}" target="_blank">${link.text}</a>`).join('') || 'Không có'}
-                                ${result.links?.length > 5 ? '<div>...</div>' : ''}
-                            </div>
+                    </div>
+                ` : ''}
+                ${result.structure ? `
+                    <div class="result-field">
+                        <strong>Cấu trúc trang:</strong>
+                        <div style="font-size: 12px; color: #666;">
+                            ${result.structure.totalElements} elements, ${result.structure.forms} forms, 
+                            ${result.structure.tables} tables, ${result.structure.videos} videos
                         </div>
-                        <div class="result-field">
-                            <strong>Hình ảnh:</strong> ${result.images?.length || 0} hình
-                        </div>
-                        <div class="result-field">
-                            <strong>Thời gian:</strong> ${new Date(result.crawledAt).toLocaleString('vi-VN')}
-                        </div>
+                    </div>
+                ` : ''}
+                <div class="result-field">
+                    <strong>Mode:</strong> 
+                    <span style="color: ${result.crawlMode === 'unlimited' ? '#28a745' : '#007bff'}; font-weight: 600;">
+                        ${result.crawlMode === 'unlimited' ? '🔥 Unlimited' : '⚡ Limited'}
+                    </span>
+                </div>
+                <div class="result-field">
+                    <strong>Thời gian:</strong> ${new Date(result.crawledAt).toLocaleString('vi-VN')}
+                </div>
                     </div>
                 `;
             }
